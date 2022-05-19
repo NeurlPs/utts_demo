@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>Towards Improved Zero-shot Voice Conversion with Conditional DSVAE</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <script src="jquery-3.5.js"></script>
+</head>
+
+<body data-new-gr-c-s-check-loaded="14.1001.0" data-gr-ext-installed="">
+
+<script src="https://unpkg.com/wavesurfer.js"></script>
+      
+<div class="container">
+    <div id="text1">Towards Improved Zero-shot Voice Conversion with Conditional DSVAE</div>
+    <div id="intro">
+        <br>
+        <center> Jiachen Lian<sup>1</sup><sup>2</sup><sup>*</sup>, Chunlei Zhang<sup>2</sup><sup>*</sup>, Gopala Krishna Anumanchipalli, Dong Yu<sup>2</sup> </center>
+        <center> <sup>1</sup> Berkeley EECS, CA </center>
+        <center> <sup>2</sup> Tencent AI Lab, Bellevue, WA</center>
+        <center> <sup>*</sup> Equal Contribution</center>
+    </div>
+</div>
+
+<div class="content-container">
+  <img src="fig.png" style="width:70%">
+  <p>
+    Disentangling content and speaking style information is essential for zero-shot non-parallel voice conversion (VC). Our previous study investigated a novel framework with disentangled sequential variational autoencoder (DSVAE) as the backbone for information decomposition. We have demonstrated that simultaneous disentangling
+    content embedding and speaker embedding from one utterance is feasible for zero-shot VC. In this study, we continue the direction by raising one concern about the prior distribution of content branch in the DSVAE baseline. We find the random initialized prior distribution will force the content embedding to reduce the phonetic-structure information during the learning process, which is not a desired property. Here, we seek to achieve a better content embedding with more phonetic information preserved. We propose conditional DSVAE, a new model that enables content bias as a condition to the prior modeling and reshapes the content embedding sampled from the posterior distribution. In our experiment on the VCTK dataset, we demonstrate that content embeddings derived from the conditional DSVAE overcome the randomness and achieve a much better phoneme classification accuracy, a stabilized vocalization and a better zero-shot VC performance compared with the competitive DSVAE baseline. 
+  </p>
+  <br/>
+</div>
+
+<div class="content-container">
+  <div class="content-title">Comments for Zero-Shot VC</div>
+  <ul>
+    <li>1. No speaker labels used. No Pre-trained speaker embeddings used. Non-parallel training. </li>
+    <li>2. Only unseen-to-unseen conversion samples are given.</li>
+    <li>3. Refer to the previous work https://jlian2.github.io/Robust-Voice-Style-Transfer/ for the baseline demo </li>
+  </ul>
+</div>
+
+<div class="content-container">
+  <div class="content-title">Male and Female</div>
+<table>
+  <tr>
+    <th style="text-align: center"><strong>Source</strong></th>
+    <th style="text-align: center"><strong>Target</strong></th>
+    <th style="text-align: center"><strong>DSVAE</strong></th>
+    <th style="text-align: center"><strong>C-DSVAE(BEST-VQ)</strong></th>
+    <th style="text-align: center"><strong>C-DSVAE(Mel)</strong></th>
+    <th style="text-align: center"><strong>C-DSVAE(Align)</strong></th>
+    <th style="text-align: center"><strong>C-DSVAE(WavLM)</strong></th>
+  </tr>
+  <tbodyi>
+  <tr>
+    <th style="text-align: center"><strong>p293</strong></th>
+    <th style="text-align: center"><strong>p271</strong></th>
+    <th style="text-align: center"><strong>p293->p271</strong></th>
+    <th style="text-align: center"><strong>p293->p271</strong></th>
+    <th style="text-align: center"><strong>p293->p271</strong></th>
+    <th style="text-align: center"><strong>p293->p271</strong></th>
+    <th style="text-align: center"><strong>p293->p271</strong></th>
+  </tr>
+
+    <tr>
+
+      <td style="text-align: left">
+        <div id="source1_wav"></div>
+        <button id="source1" class="play-button-demo btn btn-primary" onclick="wavesurfer_source1.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+        </button>
+        <script>
+          var wavesurfer_source1 = WaveSurfer.create({
+                      container: '#source1_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_source1.load("wavs/M2F1/p293_016.wav");
+        </script>
+      </td> 
+
+      <td style="text-align: left">
+        <div id="target1_wav"></div>
+        <button id="target1" class="play-button-demo btn btn-primary" onclick="wavesurfer_target1.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_target1 = WaveSurfer.create({
+                        container: '#target1_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_target1.load("wavs/M2F1/p271_015.wav");
+        </script>   
+      </td>
+
+      <td style="text-align: left">
+        <div id="s1_t1_0_wav"></div>
+        <button id="s1_t1_0" class="play-button-demo btn btn-primary" onclick="wavesurfer_s1_t1_0.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s1_t1_0 = WaveSurfer.create({
+                        container: '#s1_t1_0_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s1_t1_0.load("wavs/M2F1/p293_p271.wav");
+        </script>   
+      </td>  
+
+      <td style="text-align: left">
+        <div id="s1_t1_1_wav"></div>
+        <button id="s1_t1_1" class="play-button-demo btn btn-primary" onclick="wavesurfer_s1_t1_1.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s1_t1_1 = WaveSurfer.create({
+                        container: '#s1_t1_1_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s1_t1_1.load("wavs/M2F1/randomVQ_p293_01_to_p271_010.wav");
+        </script>   
+      </td>  
+
+      <td style="text-align: left">
+        <div id="s1_t1_2_wav"></div>
+        <button id="s1_t1_2" class="play-button-demo btn btn-primary" onclick="wavesurfer_s1_t1_2.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s1_t1_2 = WaveSurfer.create({
+                        container: '#s1_t1_2_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s1_t1_2.load("wavs/M2F1/kmeans_mel_p293_01_to_p271_010.wav");
+        </script>   
+      </td>  
+
+      <td style="text-align: left">
+        <div id="s1_t1_3_wav"></div>
+        <button id="s1_t1_3" class="play-button-demo btn btn-primary" onclick="wavesurfer_s1_t1_3.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s1_t1_3 = WaveSurfer.create({
+                        container: '#s1_t1_3_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s1_t1_3.load("wavs/M2F1/alignment_p293_01_to_p271_010.wav");
+        </script>   
+      </td>   
+
+      <td style="text-align: left">
+        <div id="s1_t1_4_wav"></div>
+        <button id="s1_t1_4" class="play-button-demo btn btn-primary" onclick="wavesurfer_s1_t1_4.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s1_t1_4 = WaveSurfer.create({
+                        container: '#s1_t1_4_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s1_t1_4.load("wavs/M2F1/wavlm50_p293_01_to_p271_010.wav");
+        </script>   
+      </td>  
+
+    </tr>
+
+  <tr>
+    <th style="text-align: center"><strong>p271</strong></th>
+    <th style="text-align: center"><strong>p293</strong></th>
+    <th style="text-align: center"><strong>p271->p293</strong></th>
+    <th style="text-align: center"><strong>p271->p293</strong></th>
+    <th style="text-align: center"><strong>p271->p293</strong></th>
+    <th style="text-align: center"><strong>p271->p293</strong></th>
+    <th style="text-align: center"><strong>p271->p293</strong></th>
+  </tr>
+
+    <tr>
+
+      <td style="text-align: left">
+        <div id="source2_wav"></div>
+        <button id="source2" class="play-button-demo btn btn-primary" onclick="wavesurfer_source2.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_source2 = WaveSurfer.create({
+                        container: '#source2_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_source2.load("wavs/M2F1/p271_015.wav");
+        </script>   
+      </td> 
+
+      <td style="text-align: left">
+        <div id="target2_wav"></div>
+        <button id="target2" class="play-button-demo btn btn-primary" onclick="wavesurfer_target2.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_target2 = WaveSurfer.create({
+                        container: '#target2_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_target2.load("wavs/M2F1/p293_016.wav");
+        </script>   
+      </td> 
+
+      <td style="text-align: left">
+        <div id="s2_t2_0_wav"></div>
+        <button id="s2_t2_0" class="play-button-demo btn btn-primary" onclick="wavesurfer_s2_t2_0.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s2_t2_0 = WaveSurfer.create({
+                        container: '#s2_t2_0_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s2_t2_0.load("wavs/M2F1/p271_p293.wav");
+        </script>   
+      </td> 
+
+      <td style="text-align: left">
+        <div id="s2_t2_1_wav"></div>
+        <button id="s2_t2_1" class="play-button-demo btn btn-primary" onclick="wavesurfer_s2_t2_1.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s2_t2_1 = WaveSurfer.create({
+                        container: '#s2_t2_1_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s2_t2_1.load("wavs/M2F1/randomVQ_p271_01_to_p293_010.wav");
+        </script>   
+      </td>   
+
+    <td style="text-align: left">
+      <div id="s2_t2_2_wav"></div>
+      <button id="s2_t2_2" class="play-button-demo btn btn-primary" onclick="wavesurfer_s2_t2_2.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s2_t2_2 = WaveSurfer.create({
+                      container: '#s2_t2_2_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s2_t2_2.load("wavs/M2F1/kmeans_mel_p271_01_to_p293_010.wav");
+      </script>   
+    </td> 
+
+    <td style="text-align: left">
+      <div id="s2_t2_3_wav"></div>
+      <button id="s2_t2_3" class="play-button-demo btn btn-primary" onclick="wavesurfer_s2_t2_3.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s2_t2_3 = WaveSurfer.create({
+                      container: '#s2_t2_3_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s2_t2_3.load("wavs/M2F1/alignment_p271_01_to_p293_010.wav");
+      </script>   
+    </td>  
+
+    <td style="text-align: left">
+      <div id="s2_t2_4_wav"></div>
+      <button id="s2_t2_4" class="play-button-demo btn btn-primary" onclick="wavesurfer_s2_t2_4.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s2_t2_4 = WaveSurfer.create({
+                      container: '#s2_t2_4_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s2_t2_4.load("wavs/M2F1/wavlm50_p271_01_to_p293_010.wav");
+      </script>   
+    </td> 
+
+  <tr>
+    <th style="text-align: center"><strong>p317</strong></th>
+    <th style="text-align: center"><strong>p274</strong></th>
+    <th style="text-align: center"><strong>p317->p274</strong></th>
+    <th style="text-align: center"><strong>p317->p274</strong></th>
+    <th style="text-align: center"><strong>p317->p274</strong></th>
+    <th style="text-align: center"><strong>p317->p274</strong></th>
+    <th style="text-align: center"><strong>p317->p274</strong></th>
+  </tr>
+    
+    <tr>
+      <td style="text-align: left">
+        <div id="source3_wav"></div>
+        <button id="source3" class="play-button-demo btn btn-primary" onclick="wavesurfer_source3.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_source3 = WaveSurfer.create({
+                        container: '#source3_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_source3.load("wavs/M2F2/p317_134.wav");
+        </script>   
+      </td>
+
+      <td style="text-align: left">
+        <div id="target3_wav"></div>
+        <button id="target3" class="play-button-demo btn btn-primary" onclick="wavesurfer_target3.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_target3 = WaveSurfer.create({
+                        container: '#target3_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_target3.load("wavs/M2F2/p274_134.wav");
+        </script>   
+      </td>
+      
+      <td style="text-align: left">
+        <div id="s3_t3_0_wav"></div>
+        <button id="s3_t3_0" class="play-button-demo btn btn-primary" onclick="wavesurfer_s3_t3_0.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s3_t3_0 = WaveSurfer.create({
+                        container: '#s3_t3_0_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s3_t3_0.load("wavs/M2F2/p317_p274.wav");
+        </script>   
+      </td> 
+
+      <td style="text-align: left">
+        <div id="s3_t3_1_wav"></div>
+        <button id="s3_t3_1" class="play-button-demo btn btn-primary" onclick="wavesurfer_s3_t3_1.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s3_t3_1 = WaveSurfer.create({
+                        container: '#s3_t3_1_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s3_t3_1.load("wavs/M2F2/randomVQ_p317_13_to_p274_130.wav");
+        </script>   
+      </td>  
+
+    <td style="text-align: left">
+      <div id="s3_t3_2_wav"></div>
+      <button id="s3_t3_2" class="play-button-demo btn btn-primary" onclick="wavesurfer_s3_t3_2.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s3_t3_2 = WaveSurfer.create({
+                      container: '#s3_t3_2_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s3_t3_2.load("wavs/M2F2/kmeans_mel_p317_13_to_p274_130.wav");
+      </script>   
+    </td> 
+
+    <td style="text-align: left">
+      <div id="s3_t3_3_wav"></div>
+      <button id="s3_t3_3" class="play-button-demo btn btn-primary" onclick="wavesurfer_s3_t3_3.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s3_t3_3 = WaveSurfer.create({
+                      container: '#s3_t3_3_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s3_t3_3.load("wavs/M2F2/alignment_p317_13_to_p274_130.wav");
+      </script>   
+    </td>  
+
+    <td style="text-align: left">
+      <div id="s3_t3_4_wav"></div>
+      <button id="s3_t3_4" class="play-button-demo btn btn-primary" onclick="wavesurfer_s3_t3_4.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s3_t3_4 = WaveSurfer.create({
+                      container: '#s3_t3_4_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s3_t3_4.load("wavs/M2F2/wavlm50_p317_13_to_p274_130.wav");
+      </script>   
+    </td> 
+    </tr>
+  <tr>
+    <th style="text-align: center"><strong>p274</strong></th>
+    <th style="text-align: center"><strong>p317</strong></th>
+    <th style="text-align: center"><strong>p274->p317</strong></th>
+    <th style="text-align: center"><strong>p274->p317</strong></th>
+    <th style="text-align: center"><strong>p274->p317</strong></th>
+    <th style="text-align: center"><strong>p274->p317</strong></th>
+    <th style="text-align: center"><strong>p274->p317</strong></th>
+  </tr>
+
+    <tr>
+      <td style="text-align: left">
+        <div id="source4_wav"></div>
+        <button id="source4" class="play-button-demo btn btn-primary" onclick="wavesurfer_source4.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_source4 = WaveSurfer.create({
+                        container: '#source4_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_source4.load("wavs/M2F2/p274_134.wav");
+        </script>   
+      </td>
+
+      <td style="text-align: left">
+        <div id="target4_wav"></div>
+        <button id="target4" class="play-button-demo btn btn-primary" onclick="wavesurfer_target4.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_target4 = WaveSurfer.create({
+                        container: '#target4_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_target4.load("wavs/M2F2/p317_134.wav");
+        </script>   
+      </td>
+      
+      <td style="text-align: left">
+        <div id="s4_t4_1_wav"></div>
+        <button id="s4_t4_1" class="play-button-demo btn btn-primary" onclick="wavesurfer_s4_t4_1.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s4_t4_1 = WaveSurfer.create({
+                        container: '#s4_t4_1_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s4_t4_1.load("wavs/M2F2/randomVQ_p274_13_to_p317_130.wav");
+        </script>   
+      </td> 
+
+      <td style="text-align: left">
+        <div id="s4_t4_0_wav"></div>
+        <button id="s4_t4_0" class="play-button-demo btn btn-primary" onclick="wavesurfer_s4_t4_0.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s4_t4_0 = WaveSurfer.create({
+                        container: '#s4_t4_0_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s4_t4_0.load("wavs/M2F2/p274_p317.wav");
+        </script>   
+      </td>   
+
+    <td style="text-align: left">
+      <div id="s4_t4_2_wav"></div>
+      <button id="s4_t4_2" class="play-button-demo btn btn-primary" onclick="wavesurfer_s4_t4_2.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s4_t4_2 = WaveSurfer.create({
+                      container: '#s4_t4_2_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s4_t4_2.load("wavs/M2F2/kmeans_mel_p274_13_to_p317_130.wav");
+      </script>   
+    </td> 
+
+    <td style="text-align: left">
+      <div id="s4_t4_3_wav"></div>
+      <button id="s4_t4_3" class="play-button-demo btn btn-primary" onclick="wavesurfer_s4_t4_3.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s4_t4_3 = WaveSurfer.create({
+                      container: '#s4_t4_3_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s4_t4_3.load("wavs/M2F2/alignment_p274_13_to_p317_130.wav");
+      </script>   
+    </td>  
+
+    <td style="text-align: left">
+      <div id="s4_t4_4_wav"></div>
+      <button id="s4_t4_4" class="play-button-demo btn btn-primary" onclick="wavesurfer_s4_t4_4.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s4_t4_4 = WaveSurfer.create({
+                      container: '#s4_t4_4_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s4_t4_4.load("wavs/M2F2/wavlm50_p274_13_to_p317_130.wav");
+      </script>   
+    </td> 
+    </tr>
+
+  <tr>
+    <th style="text-align: center"><strong>p317</strong></th>
+    <th style="text-align: center"><strong>p241</strong></th>
+    <th style="text-align: center"><strong>p317->p241</strong></th>
+    <th style="text-align: center"><strong>p317->p241</strong></th>
+    <th style="text-align: center"><strong>p317->p241</strong></th>
+    <th style="text-align: center"><strong>p317->p241</strong></th>
+    <th style="text-align: center"><strong>p317->p241</strong></th>
+  </tr>
+
+    <tr>
+      <td style="text-align: left">
+        <div id="source5_wav"></div>
+        <button id="source5" class="play-button-demo btn btn-primary" onclick="wavesurfer_source5.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_source5 = WaveSurfer.create({
+                        container: '#source5_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_source5.load("wavs/M2F2/p317_134.wav");
+        </script>   
+      </td>
+
+      <td style="text-align: left">
+        <div id="target5_wav"></div>
+        <button id="target5" class="play-button-demo btn btn-primary" onclick="wavesurfer_target5.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_target5 = WaveSurfer.create({
+                        container: '#target5_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_target5.load("wavs/M2F3/p241_050.wav");
+        </script>   
+      </td>
+      
+      <td style="text-align: left">
+        <div id="s5_t5_0_wav"></div>
+        <button id="s5_t5_0" class="play-button-demo btn btn-primary" onclick="wavesurfer_s5_t5_0.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s5_t5_0 = WaveSurfer.create({
+                        container: '#s5_t5_0_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s5_t5_0.load("wavs/M2F3/p317_p241.wav");
+        </script>   
+      </td>
+
+      <td style="text-align: left">
+        <div id="s5_t5_1_wav"></div>
+        <button id="s5_t5_1" class="play-button-demo btn btn-primary" onclick="wavesurfer_s5_t5_1.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s5_t5_1 = WaveSurfer.create({
+                        container: '#s5_t5_1_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s5_t5_1.load("wavs/M2F3/randomVQ_p317_13_to_p241_050.wav");
+        </script>   
+      </td>   
+ 
+
+    <td style="text-align: left">
+      <div id="s5_t5_2_wav"></div>
+      <button id="s5_t5_2" class="play-button-demo btn btn-primary" onclick="wavesurfer_s5_t5_2.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s5_t5_2 = WaveSurfer.create({
+                      container: '#s5_t5_2_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s5_t5_2.load("wavs/M2F3/kmeans_mel_p317_13_to_p241_050.wav");
+      </script>   
+    </td> 
+
+    <td style="text-align: left">
+      <div id="s5_t5_3_wav"></div>
+      <button id="s5_t5_3" class="play-button-demo btn btn-primary" onclick="wavesurfer_s5_t5_3.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s5_t5_3 = WaveSurfer.create({
+                      container: '#s5_t5_3_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s5_t5_3.load("wavs/M2F3/alignment_p317_13_to_p241_050.wav");
+      </script>   
+    </td>  
+
+    <td style="text-align: left">
+      <div id="s5_t5_4_wav"></div>
+      <button id="s5_t5_4" class="play-button-demo btn btn-primary" onclick="wavesurfer_s5_t5_4.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s5_t5_4 = WaveSurfer.create({
+                      container: '#s5_t5_4_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s5_t5_4.load("wavs/M2F3/wavlm50_p317_13_to_p241_050.wav");
+      </script>   
+    </td>
+  </tr>
+
+  <tr>
+    <th style="text-align: center"><strong>p241</strong></th>
+    <th style="text-align: center"><strong>p317</strong></th>
+    <th style="text-align: center"><strong>p241->p317</strong></th>
+    <th style="text-align: center"><strong>p241->p317</strong></th>
+    <th style="text-align: center"><strong>p241->p317</strong></th>
+    <th style="text-align: center"><strong>p241->p317</strong></th>
+    <th style="text-align: center"><strong>p241->p317</strong></th>
+  </tr>
+
+  <tr>
+    <td style="text-align: left">
+      <div id="source6_wav"></div>
+      <button id="source6" class="play-button-demo btn btn-primary" onclick="wavesurfer_source6.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_source6 = WaveSurfer.create({
+                      container: '#source6_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_source6.load("wavs/M2F3/p241_050.wav");
+      </script>   
+    </td>
+
+    <td style="text-align: left">
+      <div id="target6_wav"></div>
+      <button id="target6" class="play-button-demo btn btn-primary" onclick="wavesurfer_target6.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_target6 = WaveSurfer.create({
+                      container: '#target6_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_target6.load("wavs/M2F3/p317_134.wav");
+      </script>   
+    </td>
+    
+    <td style="text-align: left">
+      <div id="s6_t6_0_wav"></div>
+      <button id="s6_t6_0" class="play-button-demo btn btn-primary" onclick="wavesurfer_s6_t6_0.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s6_t6_0 = WaveSurfer.create({
+                      container: '#s6_t6_0_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s6_t6_0.load("wavs/M2F3/p241_p317.wav");
+      </script>   
+    </td> 
+
+    <td style="text-align: left">
+      <div id="s6_t6_1_wav"></div>
+      <button id="s6_t6_1" class="play-button-demo btn btn-primary" onclick="wavesurfer_s6_t6_1.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s6_t6_1 = WaveSurfer.create({
+                      container: '#s6_t6_1_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s6_t6_1.load("wavs/M2F3/randomVQ_p241_05_to_p317_130.wav");
+      </script>   
+    </td>   
+
+  <td style="text-align: left">
+    <div id="s6_t6_2_wav"></div>
+    <button id="s6_t6_2" class="play-button-demo btn btn-primary" onclick="wavesurfer_s6_t6_2.playPause()">
+        <i class="fa fa-play"></i>
+        Play
+        /
+        <i class="fa fa-pause"></i>
+        Pause
+    </button>
+    <script>
+        var wavesurfer_s6_t6_2 = WaveSurfer.create({
+                    container: '#s6_t6_2_wav',
+                    waveColor: 'violet',
+                    progressColor: 'purple'
+                });
+        wavesurfer_s6_t6_2.load("wavs/M2F3/kmeans_mel_p241_05_to_p317_130.wav");
+    </script>   
+  </td> 
+
+  <td style="text-align: left">
+    <div id="s6_t6_3_wav"></div>
+    <button id="s6_t6_3" class="play-button-demo btn btn-primary" onclick="wavesurfer_s6_t6_3.playPause()">
+        <i class="fa fa-play"></i>
+        Play
+        /
+        <i class="fa fa-pause"></i>
+        Pause
+    </button>
+    <script>
+        var wavesurfer_s6_t6_3 = WaveSurfer.create({
+                    container: '#s6_t6_3_wav',
+                    waveColor: 'violet',
+                    progressColor: 'purple'
+                });
+        wavesurfer_s6_t6_3.load("wavs/M2F3/alignment_p241_05_to_p317_130.wav");
+    </script>   
+  </td>  
+
+  <td style="text-align: left">
+    <div id="s6_t6_4_wav"></div>
+    <button id="s6_t6_4" class="play-button-demo btn btn-primary" onclick="wavesurfer_s6_t6_4.playPause()">
+        <i class="fa fa-play"></i>
+        Play
+        /
+        <i class="fa fa-pause"></i>
+        Pause
+    </button>
+    <script>
+        var wavesurfer_s6_t6_4 = WaveSurfer.create({
+                    container: '#s6_t6_4_wav',
+                    waveColor: 'violet',
+                    progressColor: 'purple'
+                });
+        wavesurfer_s6_t6_4.load("wavs/M2F3/wavlm50_p241_05_to_p317_130.wav");
+    </script>   
+  </td>
+</tr> 
+</tbodyi>
+
+</table>
+</div>
+
+<div class="content-container">
+  <div class="content-title">Male and Male</div>
+<table>
+  <tr>
+    <th style="text-align: center"><strong>Source</strong></th>
+    <th style="text-align: center"><strong>Target</strong></th>
+    <th style="text-align: center"><strong>DSVAE</strong></th>
+    <th style="text-align: center"><strong>C-DSVAE(BEST-VQ)</strong></th>
+    <th style="text-align: center"><strong>C-DSVAE(Mel)</strong></th>
+    <th style="text-align: center"><strong>C-DSVAE(Align)</strong></th>
+    <th style="text-align: center"><strong>C-DSVAE(WavLM)</strong></th>
+  </tr>
+
+  <tbodyi>
+    <tr>
+      <th style="text-align: center"><strong>p259</strong></th>
+      <th style="text-align: center"><strong>p271</strong></th>
+      <th style="text-align: center"><strong>p271->p259</strong></th>
+      <th style="text-align: center"><strong>p271->p259</strong></th>
+      <th style="text-align: center"><strong>p271->p259</strong></th>
+      <th style="text-align: center"><strong>p271->p259</strong></th>
+      <th style="text-align: center"><strong>p271->p259</strong></th>
+    </tr>
+  
+    <tr>
+      <td style="text-align: left">
+        <div id="source7_wav"></div>
+        <button id="source7" class="play-button-demo btn btn-primary" onclick="wavesurfer_source7.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_source7 = WaveSurfer.create({
+                        container: '#source7_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_source7.load("wavs/M2M1/p259_021.wav");
+        </script>   
+      </td>
+  
+      <td style="text-align: left">
+        <div id="target7_wav"></div>
+        <button id="target7" class="play-button-demo btn btn-primary" onclick="wavesurfer_target7.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_target7 = WaveSurfer.create({
+                        container: '#target7_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_target7.load("wavs/M2M1/p271_015.wav");
+        </script>   
+      </td>
+      
+      <td style="text-align: left">
+        <div id="s7_t7_0_wav"></div>
+        <button id="s7_t7_0" class="play-button-demo btn btn-primary" onclick="wavesurfer_s7_t7_0.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s7_t7_0 = WaveSurfer.create({
+                        container: '#s7_t7_0_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s7_t7_0.load("wavs/M2M1/p259_p271.wav");
+        </script>   
+      </td> 
+      
+      <td style="text-align: left">
+        <div id="s7_t7_1_wav"></div>
+        <button id="s7_t7_1" class="play-button-demo btn btn-primary" onclick="wavesurfer_s7_t7_1.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s7_t7_1 = WaveSurfer.create({
+                        container: '#s7_t7_1_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s7_t7_1.load("wavs/M2M1/randomVQ_p259_02_to_p271_010.wav");
+        </script>   
+      </td>  
+  
+    <td style="text-align: left">
+      <div id="s7_t7_2_wav"></div>
+      <button id="s7_t7_2" class="play-button-demo btn btn-primary" onclick="wavesurfer_s7_t7_2.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s7_t7_2 = WaveSurfer.create({
+                      container: '#s7_t7_2_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s7_t7_2.load("wavs/M2M1/kmeans_mel_p259_02_to_p271_010.wav");
+      </script>   
+    </td> 
+  
+    <td style="text-align: left">
+      <div id="s7_t7_3_wav"></div>
+      <button id="s7_t7_3" class="play-button-demo btn btn-primary" onclick="wavesurfer_s7_t7_3.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s7_t7_3 = WaveSurfer.create({
+                      container: '#s7_t7_3_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s7_t7_3.load("wavs/M2M1/alignment_p259_02_to_p271_010.wav");
+      </script>   
+    </td>  
+  
+    <td style="text-align: left">
+      <div id="s7_t7_4_wav"></div>
+      <button id="s7_t7_4" class="play-button-demo btn btn-primary" onclick="wavesurfer_s7_t7_4.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s7_t7_4 = WaveSurfer.create({
+                      container: '#s7_t7_4_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s7_t7_4.load("wavs/M2M1/wavlm50_p259_02_to_p271_010.wav");
+      </script>   
+    </td>
+  </tr> 
+  
+    <tr>
+      <th style="text-align: center"><strong>p271</strong></th>
+      <th style="text-align: center"><strong>p259</strong></th>
+      <th style="text-align: center"><strong>p271->p259</strong></th>
+      <th style="text-align: center"><strong>p271->p259</strong></th>
+      <th style="text-align: center"><strong>p271->p259</strong></th>
+      <th style="text-align: center"><strong>p271->p259</strong></th>
+      <th style="text-align: center"><strong>p271->p259</strong></th>
+    </tr>
+  
+    <tr>
+      <td style="text-align: left">
+        <div id="source8_wav"></div>
+        <button id="source8" class="play-button-demo btn btn-primary" onclick="wavesurfer_source8.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_source8 = WaveSurfer.create({
+                        container: '#source8_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_source8.load("wavs/M2M1/p271_015.wav");
+        </script>   
+      </td>
+  
+      <td style="text-align: left">
+        <div id="target8_wav"></div>
+        <button id="target8" class="play-button-demo btn btn-primary" onclick="wavesurfer_target8.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_target8 = WaveSurfer.create({
+                        container: '#target8_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_target8.load("wavs/M2M1/p259_021.wav");
+        </script>   
+      </td>
+      
+      <td style="text-align: left">
+        <div id="s8_t8_0_wav"></div>
+        <button id="s8_t8_0" class="play-button-demo btn btn-primary" onclick="wavesurfer_s8_t8_0.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s8_t8_0 = WaveSurfer.create({
+                        container: '#s8_t8_0_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s8_t8_0.load("wavs/M2M1/p271_p259.wav");
+        </script>   
+      </td>  
+
+      <td style="text-align: left">
+        <div id="s8_t8_1_wav"></div>
+        <button id="s8_t8_1" class="play-button-demo btn btn-primary" onclick="wavesurfer_s8_t8_1.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s8_t8_1 = WaveSurfer.create({
+                        container: '#s8_t8_1_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s8_t8_1.load("wavs/M2M1/randomVQ_p271_01_to_p259_020.wav");
+        </script>   
+      </td>  
+  
+    <td style="text-align: left">
+      <div id="s8_t8_2_wav"></div>
+      <button id="s8_t8_2" class="play-button-demo btn btn-primary" onclick="wavesurfer_s8_t8_2.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s8_t8_2 = WaveSurfer.create({
+                      container: '#s8_t8_2_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s8_t8_2.load("wavs/M2M1/kmeans_mel_p271_01_to_p259_020.wav");
+      </script>   
+    </td> 
+  
+    <td style="text-align: left">
+      <div id="s8_t8_3_wav"></div>
+      <button id="s8_t8_3" class="play-button-demo btn btn-primary" onclick="wavesurfer_s8_t8_3.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s8_t8_3 = WaveSurfer.create({
+                      container: '#s8_t8_3_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s8_t8_3.load("wavs/M2M1/alignment_p271_01_to_p259_020.wav");
+      </script>   
+    </td>  
+  
+    <td style="text-align: left">
+      <div id="s8_t8_4_wav"></div>
+      <button id="s8_t8_4" class="play-button-demo btn btn-primary" onclick="wavesurfer_s8_t8_4.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s8_t8_4 = WaveSurfer.create({
+                      container: '#s8_t8_4_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s8_t8_4.load("wavs/M2M1/wavlm50_p271_01_to_p259_020.wav");
+      </script>   
+    </td>
+  </tr> 
+
+  <tr>
+    <th style="text-align: center"><strong>p241</strong></th>
+    <th style="text-align: center"><strong>p271</strong></th>
+    <th style="text-align: center"><strong>p241->p271</strong></th>
+    <th style="text-align: center"><strong>p241->p271</strong></th>
+    <th style="text-align: center"><strong>p241->p271</strong></th>
+    <th style="text-align: center"><strong>p241->p271</strong></th>
+    <th style="text-align: center"><strong>p241->p271</strong></th>
+  </tr>
+
+  <tr>
+    <td style="text-align: left">
+      <div id="source9_wav"></div>
+      <button id="source9" class="play-button-demo btn btn-primary" onclick="wavesurfer_source9.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_source9 = WaveSurfer.create({
+                      container: '#source9_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_source9.load("wavs/M2M2/p241_050.wav");
+      </script>   
+    </td>
+
+    <td style="text-align: left">
+      <div id="target9_wav"></div>
+      <button id="target9" class="play-button-demo btn btn-primary" onclick="wavesurfer_target9.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_target9 = WaveSurfer.create({
+                      container: '#target9_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_target9.load("wavs/M2M2/p271_015 (1).wav");
+      </script>   
+    </td>
+    
+    <td style="text-align: left">
+      <div id="s9_t9_0_wav"></div>
+      <button id="s9_t9_0" class="play-button-demo btn btn-primary" onclick="wavesurfer_s9_t9_0.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s9_t9_0 = WaveSurfer.create({
+                      container: '#s9_t9_0_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s9_t9_0.load("wavs/M2M2/p241_p271.wav");
+      </script>   
+    </td> 
+    
+    <td style="text-align: left">
+      <div id="s9_t9_1_wav"></div>
+      <button id="s9_t9_1" class="play-button-demo btn btn-primary" onclick="wavesurfer_s9_t9_1.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s9_t9_1 = WaveSurfer.create({
+                      container: '#s9_t9_1_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s9_t9_1.load("wavs/M2M2/randomVQ_p241_05_to_p271_015 (10.wav");
+      </script>   
+    </td>  
+
+  <td style="text-align: left">
+    <div id="s9_t9_2_wav"></div>
+    <button id="s9_t9_2" class="play-button-demo btn btn-primary" onclick="wavesurfer_s9_t9_2.playPause()">
+        <i class="fa fa-play"></i>
+        Play
+        /
+        <i class="fa fa-pause"></i>
+        Pause
+    </button>
+    <script>
+        var wavesurfer_s9_t9_2 = WaveSurfer.create({
+                    container: '#s9_t9_2_wav',
+                    waveColor: 'violet',
+                    progressColor: 'purple'
+                });
+        wavesurfer_s9_t9_2.load("wavs/M2M2/kmeans_mel_p241_05_to_p271_015 (10.wav");
+    </script>   
+  </td> 
+
+  <td style="text-align: left">
+    <div id="s9_t9_3_wav"></div>
+    <button id="s9_t9_3" class="play-button-demo btn btn-primary" onclick="wavesurfer_s9_t9_3.playPause()">
+        <i class="fa fa-play"></i>
+        Play
+        /
+        <i class="fa fa-pause"></i>
+        Pause
+    </button>
+    <script>
+        var wavesurfer_s9_t9_3 = WaveSurfer.create({
+                    container: '#s9_t9_3_wav',
+                    waveColor: 'violet',
+                    progressColor: 'purple'
+                });
+        wavesurfer_s9_t9_3.load("wavs/M2M2/alignment_p241_05_to_p271_015 (10.wav");
+    </script>   
+  </td>  
+
+  <td style="text-align: left">
+    <div id="s9_t9_4_wav"></div>
+    <button id="s9_t9_4" class="play-button-demo btn btn-primary" onclick="wavesurfer_s9_t9_4.playPause()">
+        <i class="fa fa-play"></i>
+        Play
+        /
+        <i class="fa fa-pause"></i>
+        Pause
+    </button>
+    <script>
+        var wavesurfer_s9_t9_4 = WaveSurfer.create({
+                    container: '#s9_t9_4_wav',
+                    waveColor: 'violet',
+                    progressColor: 'purple'
+                });
+        wavesurfer_s9_t9_4.load("wavs/M2M2/wavlm50_p241_05_to_p271_015 (10.wav");
+    </script>   
+  </td>
+</tr> 
+
+<tr>
+  <th style="text-align: center"><strong>p271</strong></th>
+  <th style="text-align: center"><strong>p241</strong></th>
+  <th style="text-align: center"><strong>p271->p241</strong></th>
+  <th style="text-align: center"><strong>p271->p241</strong></th>
+  <th style="text-align: center"><strong>p271->p241</strong></th>
+  <th style="text-align: center"><strong>p271->p241</strong></th>
+  <th style="text-align: center"><strong>p271->p241</strong></th>
+</tr>
+
+<tr>
+  <td style="text-align: left">
+    <div id="source10_wav"></div>
+    <button id="source10" class="play-button-demo btn btn-primary" onclick="wavesurfer_source10.playPause()">
+        <i class="fa fa-play"></i>
+        Play
+        /
+        <i class="fa fa-pause"></i>
+        Pause
+    </button>
+    <script>
+        var wavesurfer_source10 = WaveSurfer.create({
+                    container: '#source10_wav',
+                    waveColor: 'violet',
+                    progressColor: 'purple'
+                });
+        wavesurfer_source10.load("wavs/M2M2/p271_015 (1).wav");
+    </script>   
+  </td>
+
+  <td style="text-align: left">
+    <div id="target10_wav"></div>
+    <button id="target10" class="play-button-demo btn btn-primary" onclick="wavesurfer_target10.playPause()">
+        <i class="fa fa-play"></i>
+        Play
+        /
+        <i class="fa fa-pause"></i>
+        Pause
+    </button>
+    <script>
+        var wavesurfer_target10 = WaveSurfer.create({
+                    container: '#target10_wav',
+                    waveColor: 'violet',
+                    progressColor: 'purple'
+                });
+        wavesurfer_target10.load("wavs/M2M2/p241_050.wav");
+    </script>   
+  </td>
+  
+  <td style="text-align: left">
+    <div id="s10_t10_0_wav"></div>
+    <button id="s10_t10_0" class="play-button-demo btn btn-primary" onclick="wavesurfer_s10_t10_0.playPause()">
+        <i class="fa fa-play"></i>
+        Play
+        /
+        <i class="fa fa-pause"></i>
+        Pause
+    </button>
+    <script>
+        var wavesurfer_s10_t10_0 = WaveSurfer.create({
+                    container: '#s10_t10_0_wav',
+                    waveColor: 'violet',
+                    progressColor: 'purple'
+                });
+        wavesurfer_s10_t10_0.load("wavs/M2M2/p271_p241.wav");
+    </script>   
+  </td> 
+  
+  <td style="text-align: left">
+    <div id="s10_t10_1_wav"></div>
+    <button id="s10_t10_1" class="play-button-demo btn btn-primary" onclick="wavesurfer_s10_t10_1.playPause()">
+        <i class="fa fa-play"></i>
+        Play
+        /
+        <i class="fa fa-pause"></i>
+        Pause
+    </button>
+    <script>
+        var wavesurfer_s10_t10_1 = WaveSurfer.create({
+                    container: '#s10_t10_1_wav',
+                    waveColor: 'violet',
+                    progressColor: 'purple'
+                });
+        wavesurfer_s10_t10_1.load("wavs/M2M2/randomVQ_p271_015 (1_to_p241_050.wav");
+    </script>   
+  </td>  
+
+<td style="text-align: left">
+  <div id="s10_t10_2_wav"></div>
+  <button id="s10_t10_2" class="play-button-demo btn btn-primary" onclick="wavesurfer_s10_t10_2.playPause()">
+      <i class="fa fa-play"></i>
+      Play
+      /
+      <i class="fa fa-pause"></i>
+      Pause
+  </button>
+  <script>
+      var wavesurfer_s10_t10_2 = WaveSurfer.create({
+                  container: '#s10_t10_2_wav',
+                  waveColor: 'violet',
+                  progressColor: 'purple'
+              });
+      wavesurfer_s10_t10_2.load("wavs/M2M2/kmeans_mel_p271_015 (1_to_p241_050.wav");
+  </script>   
+</td> 
+
+<td style="text-align: left">
+  <div id="s10_t10_3_wav"></div>
+  <button id="s10_t10_3" class="play-button-demo btn btn-primary" onclick="wavesurfer_s10_t10_3.playPause()">
+      <i class="fa fa-play"></i>
+      Play
+      /
+      <i class="fa fa-pause"></i>
+      Pause
+  </button>
+  <script>
+      var wavesurfer_s10_t10_3 = WaveSurfer.create({
+                  container: '#s10_t10_3_wav',
+                  waveColor: 'violet',
+                  progressColor: 'purple'
+              });
+      wavesurfer_s10_t10_3.load("wavs/M2M2/alignment_p271_015 (1_to_p241_050.wav");
+  </script>   
+</td>  
+
+<td style="text-align: left">
+  <div id="s10_t10_4_wav"></div>
+  <button id="s10_t10_4" class="play-button-demo btn btn-primary" onclick="wavesurfer_s10_t10_4.playPause()">
+      <i class="fa fa-play"></i>
+      Play
+      /
+      <i class="fa fa-pause"></i>
+      Pause
+  </button>
+  <script>
+      var wavesurfer_s10_t10_4 = WaveSurfer.create({
+                  container: '#s10_t10_4_wav',
+                  waveColor: 'violet',
+                  progressColor: 'purple'
+              });
+      wavesurfer_s10_t10_4.load("wavs/M2M2/wavlm50_p271_015 (1_to_p241_050.wav");
+  </script>   
+</td>
+</tr> 
+
+  </tbody>
+</table>
+</div>
+
+<div class="content-container">
+  <div class="content-title">Female and Female</div>
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: center"><strong>Source</strong></th>
+      <th style="text-align: center"><strong>Target</strong></th>
+      <th style="text-align: center"><strong>DSVAE</strong></th>
+      <th style="text-align: center"><strong>C-DSVAE(BEST-VQ)</strong></th>
+      <th style="text-align: center"><strong>C-DSVAE(Mel)</strong></th>
+      <th style="text-align: center"><strong>C-DSVAE(Align)</strong></th>
+      <th style="text-align: center"><strong>C-DSVAE(WavLM)</strong></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th style="text-align: center"><strong>p293</strong></th>
+      <th style="text-align: center"><strong>p317</strong></th>
+      <th style="text-align: center"><strong>p293->p317</strong></th>
+      <th style="text-align: center"><strong>p293->p317</strong></th>
+      <th style="text-align: center"><strong>p293->p317</strong></th>
+      <th style="text-align: center"><strong>p293->p317</strong></th>
+      <th style="text-align: center"><strong>p293->p317</strong></th>
+    </tr>
+    
+    <tr>
+      <td style="text-align: left">
+        <div id="source11_wav"></div>
+        <button id="source11" class="play-button-demo btn btn-primary" onclick="wavesurfer_source11.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_source11 = WaveSurfer.create({
+                        container: '#source11_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_source11.load("wavs/F2F1/p293_212.wav");
+        </script>   
+      </td>
+    
+      <td style="text-align: left">
+        <div id="target11_wav"></div>
+        <button id="target11" class="play-button-demo btn btn-primary" onclick="wavesurfer_target11.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_target11 = WaveSurfer.create({
+                        container: '#target11_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_target11.load("wavs/F2F1/p317_134.wav");
+        </script>   
+      </td>
+      
+      <td style="text-align: left">
+        <div id="s11_t11_0_wav"></div>
+        <button id="s11_t11_0" class="play-button-demo btn btn-primary" onclick="wavesurfer_s11_t11_0.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s11_t11_0 = WaveSurfer.create({
+                        container: '#s11_t11_0_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s11_t11_0.load("wavs/F2F1/p293_p317.wav");
+        </script>   
+      </td> 
+      
+      <td style="text-align: left">
+        <div id="s11_t11_1_wav"></div>
+        <button id="s11_t11_1" class="play-button-demo btn btn-primary" onclick="wavesurfer_s11_t11_1.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s11_t11_1 = WaveSurfer.create({
+                        container: '#s11_t11_1_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s11_t11_1.load("wavs/F2F1/randomVQ_p293_21_to_p317_130.wav");
+        </script>   
+      </td>  
+    
+    <td style="text-align: left">
+      <div id="s11_t11_2_wav"></div>
+      <button id="s11_t11_2" class="play-button-demo btn btn-primary" onclick="wavesurfer_s11_t11_2.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s11_t11_2 = WaveSurfer.create({
+                      container: '#s11_t11_2_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s11_t11_2.load("wavs/F2F1/kmeans_mel_p293_21_to_p317_130.wav");
+      </script>   
+    </td> 
+    
+    <td style="text-align: left">
+      <div id="s11_t11_3_wav"></div>
+      <button id="s11_t11_3" class="play-button-demo btn btn-primary" onclick="wavesurfer_s11_t11_3.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s11_t11_3 = WaveSurfer.create({
+                      container: '#s11_t11_3_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s11_t11_3.load("wavs/F2F1/alignment_p293_21_to_p317_130.wav");
+      </script>   
+    </td>  
+    
+    <td style="text-align: left">
+      <div id="s11_t11_4_wav"></div>
+      <button id="s11_t11_4" class="play-button-demo btn btn-primary" onclick="wavesurfer_s11_t11_4.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s11_t11_4 = WaveSurfer.create({
+                      container: '#s11_t11_4_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s11_t11_4.load("wavs/F2F1/wavlm50_p293_21_to_p317_130.wav");
+      </script>   
+    </td>
+    </tr> 
+
+    <tr>
+      <th style="text-align: center"><strong>p317</strong></th>
+      <th style="text-align: center"><strong>p293</strong></th>
+      <th style="text-align: center"><strong>p317->p293</strong></th>
+      <th style="text-align: center"><strong>p317->p293</strong></th>
+      <th style="text-align: center"><strong>p317->p293</strong></th>
+      <th style="text-align: center"><strong>p317->p293</strong></th>
+      <th style="text-align: center"><strong>p317->p293</strong></th>
+    </tr>
+    
+    <tr>
+      <td style="text-align: left">
+        <div id="source12_wav"></div>
+        <button id="source12" class="play-button-demo btn btn-primary" onclick="wavesurfer_source12.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_source12 = WaveSurfer.create({
+                        container: '#source12_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_source12.load("wavs/F2F1/p317_134.wav");
+        </script>   
+      </td>
+    
+      <td style="text-align: left">
+        <div id="target12_wav"></div>
+        <button id="target12" class="play-button-demo btn btn-primary" onclick="wavesurfer_target12.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_target12 = WaveSurfer.create({
+                        container: '#target12_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_target12.load("wavs/F2F1/p293_212.wav");
+        </script>   
+      </td>
+      
+      <td style="text-align: left">
+        <div id="s12_t12_0_wav"></div>
+        <button id="s12_t12_0" class="play-button-demo btn btn-primary" onclick="wavesurfer_s12_t12_0.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s12_t12_0 = WaveSurfer.create({
+                        container: '#s12_t12_0_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s12_t12_0.load("wavs/F2F1/p317_p293.wav");
+        </script>   
+      </td> 
+
+      <td style="text-align: left">
+        <div id="s12_t12_1_wav"></div>
+        <button id="s12_t12_1" class="play-button-demo btn btn-primary" onclick="wavesurfer_s12_t12_1.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s12_t12_1 = WaveSurfer.create({
+                        container: '#s12_t12_1_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s12_t12_1.load("wavs/F2F1/randomVQ_p317_13_to_p293_210.wav");
+        </script>   
+      </td>   
+    
+    <td style="text-align: left">
+      <div id="s12_t12_2_wav"></div>
+      <button id="s12_t12_2" class="play-button-demo btn btn-primary" onclick="wavesurfer_s12_t12_2.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s12_t12_2 = WaveSurfer.create({
+                      container: '#s12_t12_2_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s12_t12_2.load("wavs/F2F1/kmeans_mel_p317_13_to_p293_210.wav");
+      </script>   
+    </td> 
+    
+    <td style="text-align: left">
+      <div id="s12_t12_3_wav"></div>
+      <button id="s12_t12_3" class="play-button-demo btn btn-primary" onclick="wavesurfer_s12_t12_3.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s12_t12_3 = WaveSurfer.create({
+                      container: '#s12_t12_3_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s12_t12_3.load("wavs/F2F1/alignment_p317_13_to_p293_210.wav");
+      </script>   
+    </td>  
+    
+    <td style="text-align: left">
+      <div id="s12_t12_4_wav"></div>
+      <button id="s12_t12_4" class="play-button-demo btn btn-primary" onclick="wavesurfer_s12_t12_4.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s12_t12_4 = WaveSurfer.create({
+                      container: '#s12_t12_4_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s12_t12_4.load("wavs/F2F1/wavlm50_p317_13_to_p293_210.wav");
+      </script>   
+    </td>
+    </tr>
+    
+    <tr>
+      <th style="text-align: center"><strong>p293</strong></th>
+      <th style="text-align: center"><strong>p317</strong></th>
+      <th style="text-align: center"><strong>p293->p317</strong></th>
+      <th style="text-align: center"><strong>p293->p317</strong></th>
+      <th style="text-align: center"><strong>p293->p317</strong></th>
+      <th style="text-align: center"><strong>p293->p317</strong></th>
+      <th style="text-align: center"><strong>p293->p317</strong></th>
+    </tr>
+    
+    <tr>
+      <td style="text-align: left">
+        <div id="source13_wav"></div>
+        <button id="source13" class="play-button-demo btn btn-primary" onclick="wavesurfer_source13.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_source13 = WaveSurfer.create({
+                        container: '#source13_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_source13.load("wavs/F2F3/p293_016.wav");
+        </script>   
+      </td>
+    
+      <td style="text-align: left">
+        <div id="target13_wav"></div>
+        <button id="target13" class="play-button-demo btn btn-primary" onclick="wavesurfer_target13.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_target13 = WaveSurfer.create({
+                        container: '#target13_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_target13.load("wavs/F2F3/p317_134.wav");
+        </script>   
+      </td>
+      
+      <td style="text-align: left">
+        <div id="s13_t13_0_wav"></div>
+        <button id="s13_t13_0" class="play-button-demo btn btn-primary" onclick="wavesurfer_s13_t13_0.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s13_t13_0 = WaveSurfer.create({
+                        container: '#s13_t13_0_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s13_t13_0.load("wavs/F2F3/p293_p317.wav");
+        </script>   
+      </td> 
+      
+      <td style="text-align: left">
+        <div id="s13_t13_1_wav"></div>
+        <button id="s13_t13_1" class="play-button-demo btn btn-primary" onclick="wavesurfer_s13_t13_1.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s13_t13_1 = WaveSurfer.create({
+                        container: '#s13_t13_1_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s13_t13_1.load("wavs/F2F3/randomVQ_p293_01_to_p317_130.wav");
+        </script>   
+      </td> 
+    
+    <td style="text-align: left">
+      <div id="s13_t13_2_wav"></div>
+      <button id="s13_t13_2" class="play-button-demo btn btn-primary" onclick="wavesurfer_s13_t13_2.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s13_t13_2 = WaveSurfer.create({
+                      container: '#s13_t13_2_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s13_t13_2.load("wavs/F2F3/kmeans_mel_p293_01_to_p317_130.wav");
+      </script>   
+    </td> 
+    
+    <td style="text-align: left">
+      <div id="s13_t13_3_wav"></div>
+      <button id="s13_t13_3" class="play-button-demo btn btn-primary" onclick="wavesurfer_s13_t13_3.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s13_t13_3 = WaveSurfer.create({
+                      container: '#s13_t13_3_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s13_t13_3.load("wavs/F2F3/alignment_p293_01_to_p317_130.wav");
+      </script>   
+    </td>  
+    
+    <td style="text-align: left">
+      <div id="s13_t13_4_wav"></div>
+      <button id="s13_t13_4" class="play-button-demo btn btn-primary" onclick="wavesurfer_s13_t13_4.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s13_t13_4 = WaveSurfer.create({
+                      container: '#s13_t13_4_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s13_t13_4.load("wavs/F2F3/wavlm50_p293_01_to_p317_130.wav");
+      </script>   
+    </td>
+    </tr> 
+
+    <tr>
+      <th style="text-align: center"><strong>p317</strong></th>
+      <th style="text-align: center"><strong>p293</strong></th>
+      <th style="text-align: center"><strong>p317->p293</strong></th>
+      <th style="text-align: center"><strong>p317->p293</strong></th>
+      <th style="text-align: center"><strong>p317->p293</strong></th>
+      <th style="text-align: center"><strong>p317->p293</strong></th>
+      <th style="text-align: center"><strong>p317->p293</strong></th>
+    </tr>
+    
+    <tr>
+      <td style="text-align: left">
+        <div id="source14_wav"></div>
+        <button id="source14" class="play-button-demo btn btn-primary" onclick="wavesurfer_source14 .playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_source14 = WaveSurfer.create({
+                        container: '#source14_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_source14.load("wavs/F2F3/p317_134.wav");
+        </script>   
+      </td>
+    
+      <td style="text-align: left">
+        <div id="target14_wav"></div>
+        <button id="target14" class="play-button-demo btn btn-primary" onclick="wavesurfer_target14.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_target14 = WaveSurfer.create({
+                        container: '#target14_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_target14.load("wavs/F2F3/p293_016.wav");
+        </script>   
+      </td>
+      
+      <td style="text-align: left">
+        <div id="s14_t14_1_wav"></div>
+        <button id="s14_t14_1" class="play-button-demo btn btn-primary" onclick="wavesurfer_s14_t14_1.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s14_t14_1 = WaveSurfer.create({
+                        container: '#s14_t14_1_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s14_t14_1.load("wavs/F2F3/randomVQ_p317_13_to_p293_010.wav");
+        </script>   
+      </td> 
+
+      <td style="text-align: left">
+        <div id="s14_t14_0_wav"></div>
+        <button id="s14_t14_0" class="play-button-demo btn btn-primary" onclick="wavesurfer_s14_t14_0.playPause()">
+            <i class="fa fa-play"></i>
+            Play
+            /
+            <i class="fa fa-pause"></i>
+            Pause
+        </button>
+        <script>
+            var wavesurfer_s14_t14_0 = WaveSurfer.create({
+                        container: '#s14_t14_0_wav',
+                        waveColor: 'violet',
+                        progressColor: 'purple'
+                    });
+            wavesurfer_s14_t14_0.load("wavs/F2F3/p317_p293.wav");
+        </script>   
+      </td>   
+    
+    <td style="text-align: left">
+      <div id="s14_t14_2_wav"></div>
+      <button id="s14_t14_2" class="play-button-demo btn btn-primary" onclick="wavesurfer_s14_t14_2.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s14_t14_2 = WaveSurfer.create({
+                      container: '#s14_t14_2_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s14_t14_2.load("wavs/F2F3/kmeans_mel_p317_13_to_p293_010.wav");
+      </script>   
+    </td> 
+    
+    <td style="text-align: left">
+      <div id="s14_t14_3_wav"></div>
+      <button id="s14_t14_3" class="play-button-demo btn btn-primary" onclick="wavesurfer_s14_t14_3.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s14_t14_3 = WaveSurfer.create({
+                      container: '#s14_t14_3_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s14_t14_3.load("wavs/F2F3/alignment_p317_13_to_p293_010.wav");
+      </script>   
+    </td>  
+    
+    <td style="text-align: left">
+      <div id="s14_t14_4_wav"></div>
+      <button id="s14_t14_4" class="play-button-demo btn btn-primary" onclick="wavesurfer_s14_t14_4.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
+      </button>
+      <script>
+          var wavesurfer_s14_t14_4 = WaveSurfer.create({
+                      container: '#s14_t14_4_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_s14_t14_4.load("wavs/F2F3/wavlm50_p317_13_to_p293_010.wav");
+      </script>   
+    </td>
+    </tr> 
+  </tbody>
+</table>
+</div>
+
+<div class="content-container">
+  Sample paged based on <a style="color:rgb(22, 38, 67)"  href="https://speechbot.github.io/resynthesis/index.html"> Speechbot</a> page.  
+</div>
+      <footer class="site-footer">        
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com/">GitHub Pages</a>.</span>
+      </footer>
+    </section>
+
+</body></html>
