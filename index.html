@@ -1588,26 +1588,17 @@
   <div class="content-title">UTTS: seen speaker with seen text</div>
 <table>
   <tr>
-    <th style="text-align: center"><strong>Source</strong></th>
-    <th style="text-align: center"><strong>Target</strong></th>
-    <th style="text-align: center"><strong>FA</strong></th>
-    <th style="text-align: center"><strong>UA</strong></th>
-    <th style="text-align: center"><strong>UA+MP</strong></th>
+    <th style="text-align: center"><strong>CDSVAE(UA)</strong></th>
+    <th style="text-align: center"><strong>CDSVAE(+MP)</strong></th>
+    <th style="text-align: center"><strong>CDSVAE(++LibriTTS)</strong></th>
   </tr>
   <tbodyi>
-  <tr>
-    <th style="text-align: center"><strong>p293</strong></th>
-    <th style="text-align: center"><strong>p271</strong></th>
-    <th style="text-align: center"><strong>p293->p271</strong></th>
-    <th style="text-align: center"><strong>p293->p271</strong></th>
-    <th style="text-align: center"><strong>p293->p271</strong></th>
-  </tr>
 
     <tr>
 
       <td style="text-align: left">
-        <div id="source1_wav"></div>
-        <button id="source1" class="play-button-demo btn btn-primary" onclick="wavesurfer_source1.playPause()">
+        <div id="tts1_1_wav"></div>
+        <button id="tts1_1" class="play-button-demo btn btn-primary" onclick="wavesurfer_source1.playPause()">
           <i class="fa fa-play"></i>
           Play
           /
@@ -1616,7 +1607,7 @@
         </button>
         <script>
           var wavesurfer_source1 = WaveSurfer.create({
-                      container: '#source1_wav',
+                      container: '#tts1_1_wav',
                       waveColor: 'violet',
                       progressColor: 'purple'
                   });
@@ -1625,79 +1616,41 @@
       </td> 
 
       <td style="text-align: left">
-        <div id="target1_wav"></div>
-        <button id="target1" class="play-button-demo btn btn-primary" onclick="wavesurfer_target1.playPause()">
-            <i class="fa fa-play"></i>
-            Play
-            /
-            <i class="fa fa-pause"></i>
-            Pause
+        <div id="tts1_2_wav"></div>
+        <button id="tts1_2" class="play-button-demo btn btn-primary" onclick="wavesurfer_source1.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
         </button>
         <script>
-            var wavesurfer_target1 = WaveSurfer.create({
-                        container: '#target1_wav',
-                        waveColor: 'violet',
-                        progressColor: 'purple'
-                    });
-            wavesurfer_target1.load("wavs/M2F1/p271_015.wav");
-        </script>   
-      </td>
+          var wavesurfer_source1 = WaveSurfer.create({
+                      container: '#tts1_2_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_source1.load("wavs/M2F1/p293_016.wav");
+        </script>
+      </td> 
 
       <td style="text-align: left">
-        <div id="s1_t1_0_wav"></div>
-        <button id="s1_t1_0" class="play-button-demo btn btn-primary" onclick="wavesurfer_s1_t1_0.playPause()">
-            <i class="fa fa-play"></i>
-            Play
-            /
-            <i class="fa fa-pause"></i>
-            Pause
+        <div id="tts1_3_wav"></div>
+        <button id="tts1_3" class="play-button-demo btn btn-primary" onclick="wavesurfer_source1.playPause()">
+          <i class="fa fa-play"></i>
+          Play
+          /
+          <i class="fa fa-pause"></i>
+          Pause
         </button>
         <script>
-            var wavesurfer_s1_t1_0 = WaveSurfer.create({
-                        container: '#s1_t1_0_wav',
-                        waveColor: 'violet',
-                        progressColor: 'purple'
-                    });
-            wavesurfer_s1_t1_0.load("wavs/M2F1/FA_p293_01_to_p271_010.wav");
-        </script>   
-      </td>  
-
-      <td style="text-align: left">
-        <div id="s1_t1_1_wav"></div>
-        <button id="s1_t1_1" class="play-button-demo btn btn-primary" onclick="wavesurfer_s1_t1_1.playPause()">
-            <i class="fa fa-play"></i>
-            Play
-            /
-            <i class="fa fa-pause"></i>
-            Pause
-        </button>
-        <script>
-            var wavesurfer_s1_t1_1 = WaveSurfer.create({
-                        container: '#s1_t1_1_wav',
-                        waveColor: 'violet',
-                        progressColor: 'purple'
-                    });
-            wavesurfer_s1_t1_1.load("wavs/M2F1/UA_p293_01_to_p271_010.wav");
-        </script>   
-      </td>  
-
-      <td style="text-align: left">
-        <div id="s1_t1_2_wav"></div>
-        <button id="s1_t1_2" class="play-button-demo btn btn-primary" onclick="wavesurfer_s1_t1_2.playPause()">
-            <i class="fa fa-play"></i>
-            Play
-            /
-            <i class="fa fa-pause"></i>
-            Pause
-        </button>
-        <script>
-            var wavesurfer_s1_t1_2 = WaveSurfer.create({
-                        container: '#s1_t1_2_wav',
-                        waveColor: 'violet',
-                        progressColor: 'purple'
-                    });
-            wavesurfer_s1_t1_2.load("wavs/M2F1/UA+MP_p293_016_mic_to_p271_015_mic0.wav");
-        </script>   
+          var wavesurfer_source1 = WaveSurfer.create({
+                      container: '#tts1_3_wav',
+                      waveColor: 'violet',
+                      progressColor: 'purple'
+                  });
+          wavesurfer_source1.load("wavs/M2F1/p293_016.wav");
+        </script>
       </td>  
     </tr>
     </tbodyi>
