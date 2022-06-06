@@ -13,31 +13,22 @@
 <script src="https://unpkg.com/wavesurfer.js"></script>
       
 <div class="container">
-    <div id="text1">Towards Improved Zero-shot Voice Conversion with Conditional DSVAE</div>
-    <div id="intro">
-        <br>
-        <center> Jiachen Lian<sup>1</sup><sup>2</sup><sup>*</sup>, Chunlei Zhang<sup>2</sup><sup>*</sup>, Gopala Krishna Anumanchipalli, Dong Yu<sup>2</sup> </center>
-        <center> <sup>1</sup> Berkeley EECS, CA </center>
-        <center> <sup>2</sup> Tencent AI Lab, Bellevue, WA</center>
-        <center> <sup>*</sup> Equal Contribution</center>
-    </div>
+    <div id="text1">UTTS: Unsupervised TTS with Conditional Disentangled Sequential Variational Auto-encoder</div>
 </div>
 
 <div class="content-container">
-  <img src="fig.png" style="width:70%">
+  <img src="UTTS-NIPS.jpg" style="width:70%">
   <p>
-    Disentangling content and speaking style information is essential for zero-shot non-parallel voice conversion (VC). Our previous study investigated a novel framework with disentangled sequential variational autoencoder (DSVAE) as the backbone for information decomposition. We have demonstrated that simultaneous disentangling
-    content embedding and speaker embedding from one utterance is feasible for zero-shot VC. In this study, we continue the direction by raising one concern about the prior distribution of content branch in the DSVAE baseline. We find the random initialized prior distribution will force the content embedding to reduce the phonetic-structure information during the learning process, which is not a desired property. Here, we seek to achieve a better content embedding with more phonetic information preserved. We propose conditional DSVAE, a new model that enables content bias as a condition to the prior modeling and reshapes the content embedding sampled from the posterior distribution. In our experiment on the VCTK dataset, we demonstrate that content embeddings derived from the conditional DSVAE overcome the randomness and achieve a much better phoneme classification accuracy, a stabilized vocalization and a better zero-shot VC performance compared with the competitive DSVAE baseline. 
+    In this paper, we propose a novel unsupervised text-to-speech (UTTS) framework which does not require text-audio pairs for the TTS acoustic modeling (AM). UTTS is a multi-speaker speech synthesizer developed from the perspective of disentangled speech representation learning. The framework offers a flexible choice of a speaker's duration model, timbre feature (identity) and content for TTS inference. We leverage recent advancements in self-supervised speech representation learning as well as speech synthesis front-end techniques for the system development. Specifically, we utilize a lexicon to map input text to the phoneme sequence, which is expanded to the frame-level forced alignment (FA) with a speaker-dependent duration model. Then, we develop an alignment mapping module that converts the FA to the unsupervised alignment (UA). Finally, a Conditional Disentangled Sequential Variational Auto-encoder (C-DSVAE), serving as the self-supervised TTS AM, takes the predicted UA and a target speaker embedding to generate the mel spectrogram, which is ultimately converted to waveform with a neural vocoder. We show how our method enables speech synthesis without using a paired TTS corpus. Experiments demonstrate that UTTS can synthesize speech of high naturalness and intelligibility measured by human and objective evaluations.
   </p>
   <br/>
 </div>
 
 <div class="content-container">
-  <div class="content-title">Comments for Zero-Shot VC</div>
+  <div class="content-title">Comments for UTTS</div>
   <ul>
-    <li>1. No speaker labels used. No Pre-trained speaker embeddings used. Non-parallel training. </li>
-    <li>2. Only unseen-to-unseen conversion samples are given.</li>
-    <li>3. Refer to the previous work https://jlian2.github.io/Robust-Voice-Style-Transfer/ for the baseline demo </li>
+    <li>1. Text to Speech Demo </li>
+    <li>2. Voice Conversion Demo.</li>
   </ul>
 </div>
 
